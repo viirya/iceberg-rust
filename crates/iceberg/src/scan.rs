@@ -204,7 +204,7 @@ impl TableScan {
             field_ids.push(field_id as usize);
         }
 
-        arrow_reader_builder = arrow_reader_builder.with_column_projection(field_ids);
+        arrow_reader_builder = arrow_reader_builder.with_field_ids(field_ids);
 
         if let Some(batch_size) = self.batch_size {
             arrow_reader_builder = arrow_reader_builder.with_batch_size(batch_size);

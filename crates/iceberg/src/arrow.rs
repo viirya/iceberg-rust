@@ -32,7 +32,7 @@ use crate::spec::SchemaRef;
 /// Builder to create ArrowReader
 pub struct ArrowReaderBuilder {
     batch_size: Option<usize>,
-    columns: Vec<usize>,
+    field_ids: Vec<usize>,
     file_io: FileIO,
     schema: SchemaRef,
 }
@@ -55,9 +55,9 @@ impl ArrowReaderBuilder {
         self
     }
 
-    /// Sets the desired column projection.
-    pub fn with_column_projection(mut self, columns: Vec<usize>) -> Self {
-        self.columns = columns;
+    /// Sets the desired column projection with a list of field ids.
+    pub fn with_field_ids(mut self, field_ids: Vec<usize>) -> Self {
+        self.field_ids = field_ids;
         self
     }
 
@@ -65,7 +65,7 @@ impl ArrowReaderBuilder {
     pub fn build(self) -> ArrowReader {
         ArrowReader {
             batch_size: self.batch_size,
-            columns: self.columns,
+            field_ids: self.field_ids,
             schema: self.schema,
             file_io: self.file_io,
         }
@@ -75,7 +75,7 @@ impl ArrowReaderBuilder {
 /// Reads data from Parquet files
 pub struct ArrowReader {
     batch_size: Option<usize>,
-    columns: Vec<usize>,
+    field_ids: Vec<usize>,
     #[allow(dead_code)]
     schema: SchemaRef,
     file_io: FileIO,
@@ -121,12 +121,12 @@ impl ArrowReader {
         metadata: &Arc<ParquetMetaData>,
         parquet_schema: &ArrowSchemaRef,
     ) -> crate::Result<ProjectionMask> {
-        if self.columns.is_empty() {
+        if self.field_ids.is_empty() {
             Ok(ProjectionMask::all())
         } else {
             let mut indices = vec![];
-            for col in &self.columns {
-                if *col > parquet_schema.fields().len() {
+            for field_id in &self.field_ids {
+                if *field_id > parquet_schema.fields().len() {
                     return Err(Error::new(
                         ErrorKind::DataInvalid,
                         format!(
